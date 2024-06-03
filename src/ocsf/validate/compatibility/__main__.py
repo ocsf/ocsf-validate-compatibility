@@ -81,128 +81,133 @@ from .validator import CompatibilityValidator
 # logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
-# Default configuration
-config = {
-    "before": "1.0.0",
-}
+def main():
+    # Default configuration
+    config = {
+        "before": "1.0.0",
+    }
 
-# Default finding names x severities
-severities: dict[str, Severity] = {}
+    # Default finding names x severities
+    severities: dict[str, Severity] = {}
 
-# Configure parser
-parser = ArgumentParser(description="Validate compatibility between two OCSF schemas")
-parser.add_argument("before", help="Path to the schema file before the change")
-parser.add_argument("after", help="Path to the schema file before the change")
-parser.add_argument("--cache", help="Path to the schema cache directory")
-parser.add_argument("--config", help="Path to the config.toml file")
-parser.add_argument("--info", nargs="*", action="append", help="A finding to assign an info severity to")
-parser.add_argument("--warning", nargs="*", action="append", help="A finding to assign a warning severity to")
-parser.add_argument("--error", nargs="*", action="append", help="A finding to assign an error severity to")
-parser.add_argument("--fatal", nargs="*", action="append", help="A finding to assign a fatal severity to")
-parser.add_argument("--color", action="store_true", default=True, help="Enable colored output")
-parser.add_argument("--no-color", dest="color", action="store_false", help="Enable colored output")
+    # Configure parser
+    parser = ArgumentParser(description="Validate compatibility between two OCSF schemas")
+    parser.add_argument("before", help="Path to the schema file before the change")
+    parser.add_argument("after", help="Path to the schema file before the change")
+    parser.add_argument("--cache", help="Path to the schema cache directory")
+    parser.add_argument("--config", help="Path to the config.toml file")
+    parser.add_argument("--info", nargs="*", action="append", help="A finding to assign an info severity to")
+    parser.add_argument("--warning", nargs="*", action="append", help="A finding to assign a warning severity to")
+    parser.add_argument("--error", nargs="*", action="append", help="A finding to assign an error severity to")
+    parser.add_argument("--fatal", nargs="*", action="append", help="A finding to assign a fatal severity to")
+    parser.add_argument("--color", action="store_true", default=True, help="Enable colored output")
+    parser.add_argument("--no-color", dest="color", action="store_false", help="Enable colored output")
 
-args = parser.parse_args()
-
-
-# Read configuration from file
-if args.config:
-    with open(args.config, "rb") as f:
-        conf = tomllib.load(f)
-
-        if "before" in conf:
-            config["before"] = conf["before"]
-        if "after" in conf:
-            config["after"] = conf["after"]
-        if "cache" in conf:
-            config["cache"] = conf["cache"]
-        if "severity" in conf:
-            sevs = conf["severity"]
-            if isinstance(sevs, dict):
-                severities |= cast(dict[str, Severity], sevs)
-
-# Override configuration from command line arguments
-if args.before:
-    config["before"] = args.before
-
-if args.after:
-    config["after"] = args.after
-
-if args.cache:
-    config["cache"] = args.cache
-
-if args.info:
-    for finding in args.info:
-        for f in finding:
-            severities[f] = Severity.INFO
-
-if args.warning:
-    for finding in args.warning:
-        for f in finding:
-            severities[f] = Severity.WARNING
-
-if args.error:
-    for finding in args.error:
-        for f in finding:
-            severities[f] = Severity.ERROR
-
-if args.fatal:
-    for finding in args.fatal:
-        for f in finding:
-            severities[f] = Severity.FATAL
-
-# Check severity names
-validate_severities(severities)
+    args = parser.parse_args()
 
 
-# Enforce that before and after are present
-if "before" not in config:
-    print("Missing before schema file or version")
-    exit(1)
+    # Read configuration from file
+    if args.config:
+        with open(args.config, "rb") as f:
+            conf = tomllib.load(f)
 
-if "after" not in config:
-    print("Missing after schema file or version")
-    exit(1)
+            if "before" in conf:
+                config["before"] = conf["before"]
+            if "after" in conf:
+                config["after"] = conf["after"]
+            if "cache" in conf:
+                config["cache"] = conf["cache"]
+            if "severity" in conf:
+                sevs = conf["severity"]
+                if isinstance(sevs, dict):
+                    severities |= cast(dict[str, Severity], sevs)
 
-# Load the schemas
-client = OcsfApiClient(cache_dir=config.get("cache", None))
-try:
-    before = get_schema(config["before"], client)
-    after = get_schema(config["after"], client)
-except URLError:
-    print("Unable to communicate with the OCSF server")
-    exit(1)
+    # Override configuration from command line arguments
+    if args.before:
+        config["before"] = args.before
 
-# Configure a validator and run it
-validator = CompatibilityValidator(cast(ChangedSchema, compare(before, after)), severities)
-results = validator.validate()
+    if args.after:
+        config["after"] = args.after
 
-print()
-if not args.color:
-    print(" OCSF Compatibility Validator ")
-    print("=" * 30)
-else:
-    print(colored(" OCSF Compatibility Validator", "white"))
-    print(colored("=" * 30, "magenta"))
+    if args.cache:
+        config["cache"] = args.cache
 
-print()
-print("Validate backwards compatibility between two OCSF schemas.\n")
-print(
-    "For more information about breaking changes in OCSF, see the Schema FAQ:\n  https://github.com/ocsf/ocsf-docs/blob/main/FAQs/Schema%20FAQ.md\n"
-)
+    if args.info:
+        for finding in args.info:
+            for f in finding:
+                severities[f] = Severity.INFO
 
-print(f"Looking for breaking changes between ocsf-schema-{before.version} and ocsf-schema-{after.version}.")
-print()
+    if args.warning:
+        for finding in args.warning:
+            for f in finding:
+                severities[f] = Severity.WARNING
 
-# Initialize a formatter
-if not args.color:
-    formatter = ValidationFormatter()
-else:
-    formatter = ColoringValidationFormatter()
+    if args.error:
+        for finding in args.error:
+            for f in finding:
+                severities[f] = Severity.ERROR
 
-# Show the results
-print(formatter.format(results))
+    if args.fatal:
+        for finding in args.fatal:
+            for f in finding:
+                severities[f] = Severity.FATAL
 
-# Exit with an error code if there are any errors or fatal findings
-if count_severity(results, Severity.ERROR) > 0 or count_severity(results, Severity.FATAL) > 0:
-    exit(2)
+    # Check severity names
+    validate_severities(severities)
+
+
+    # Enforce that before and after are present
+    if "before" not in config:
+        print("Missing before schema file or version")
+        exit(1)
+
+    if "after" not in config:
+        print("Missing after schema file or version")
+        exit(1)
+
+    # Load the schemas
+    client = OcsfApiClient(cache_dir=config.get("cache", None))
+    try:
+        before = get_schema(config["before"], client)
+        after = get_schema(config["after"], client)
+    except URLError:
+        print("Unable to communicate with the OCSF server")
+        exit(1)
+
+    # Configure a validator and run it
+    validator = CompatibilityValidator(cast(ChangedSchema, compare(before, after)), severities)
+    results = validator.validate()
+
+    print()
+    if not args.color:
+        print(" OCSF Compatibility Validator ")
+        print("=" * 30)
+    else:
+        print(colored(" OCSF Compatibility Validator", "white"))
+        print(colored("=" * 30, "magenta"))
+
+    print()
+    print("Validate backwards compatibility between two OCSF schemas.\n")
+    print(
+        "For more information about breaking changes in OCSF, see the Schema FAQ:\n  https://github.com/ocsf/ocsf-docs/blob/main/FAQs/Schema%20FAQ.md\n"
+    )
+
+    print(f"Looking for breaking changes between ocsf-schema-{before.version} and ocsf-schema-{after.version}.")
+    print()
+
+    # Initialize a formatter
+    if not args.color:
+        formatter = ValidationFormatter()
+    else:
+        formatter = ColoringValidationFormatter()
+
+    # Show the results
+    print(formatter.format(results))
+
+    # Exit with an error code if there are any errors or fatal findings
+    if count_severity(results, Severity.ERROR) > 0 or count_severity(results, Severity.FATAL) > 0:
+        exit(2)
+
+
+if __name__ == "__main__":
+    main()

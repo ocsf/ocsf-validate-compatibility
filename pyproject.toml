@@ -11,10 +11,10 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-dacite = "^1.8.1" # TODO delete me after referencing a published ocsf-schema
 semver = "^3.0.2"
 termcolor = "^2.4.0"
-ocsf-lib = {path = "../ocsf-lib-py", develop = true}
+dacite = "^1.8.1" # TODO delete me after referencing a published ocsf-schema
+ocsf-lib = {path = "../ocsf-lib-py", develop = true} # TODO delete me after referencing a published ocsf-schema
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.4.2"
