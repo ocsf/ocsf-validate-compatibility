@@ -7,6 +7,7 @@ from .changed_type import NoChangedTypesRule
 from .increased_requirement import NoIncreasedRequirementsRule
 from .removed_records import NoRemovedRecordsRule
 from .removed_uids import NoChangedClassUidsRule
+from .added_required_attrs import NoAddedRequiredAttrsRule
 
 
 class CompatibilityValidator(Validator[ChangedSchema]):
@@ -16,4 +17,5 @@ class CompatibilityValidator(Validator[ChangedSchema]):
             NoChangedClassUidsRule(),
             NoIncreasedRequirementsRule(),
             NoChangedTypesRule(),
+            NoAddedRequiredAttrsRule(),
         ]
