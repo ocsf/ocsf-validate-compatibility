@@ -105,7 +105,6 @@ def main():
 
     args = parser.parse_args()
 
-
     # Read configuration from file
     if args.config:
         with open(args.config, "rb") as f:
@@ -154,7 +153,6 @@ def main():
 
     # Check severity names
     validate_severities(severities)
-
 
     # Enforce that before and after are present
     if "before" not in config:
