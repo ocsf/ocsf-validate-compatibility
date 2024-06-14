@@ -92,16 +92,21 @@ def main():
 
     # Configure parser
     parser = ArgumentParser(description="Validate compatibility between two OCSF schemas")
-    parser.add_argument("before", help="Path to the schema file before the change")
-    parser.add_argument("after", help="Path to the schema file before the change")
-    parser.add_argument("--cache", help="Path to the schema cache directory")
-    parser.add_argument("--config", help="Path to the config.toml file")
-    parser.add_argument("--info", nargs="*", action="append", help="A finding to assign an info severity to")
-    parser.add_argument("--warning", nargs="*", action="append", help="A finding to assign a warning severity to")
-    parser.add_argument("--error", nargs="*", action="append", help="A finding to assign an error severity to")
-    parser.add_argument("--fatal", nargs="*", action="append", help="A finding to assign a fatal severity to")
-    parser.add_argument("--color", action="store_true", default=True, help="Enable colored output")
-    parser.add_argument("--no-color", dest="color", action="store_false", help="Enable colored output")
+    parser.add_argument(
+        "before",
+        nargs="?",
+        default="latest-stable",
+        help="Path or version number of the old schema. Defaults to 'latest-stable'.",
+    )
+    parser.add_argument("after", help="Path or version number of the new schema.")
+    parser.add_argument("--cache", help="Path to the schema cache directory.")
+    parser.add_argument("--config", help="Path to the config.toml file.")
+    parser.add_argument("--info", nargs="*", action="append", help="A finding to assign an info severity to.")
+    parser.add_argument("--warning", nargs="*", action="append", help="A finding to assign a warning severity to.")
+    parser.add_argument("--error", nargs="*", action="append", help="A finding to assign an error severity to.")
+    parser.add_argument("--fatal", nargs="*", action="append", help="A finding to assign a fatal severity to.")
+    parser.add_argument("--color", action="store_true", default=True, help="Enable colored output.")
+    parser.add_argument("--no-color", dest="color", action="store_false", help="Enable colored output.")
 
     args = parser.parse_args()
 
