@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ocsf-validate-compatibility"
-version = "0.2.0"
+version = "0.3.0"
 description = "Tools for working with the OCSF schema"
 authors = ["Jeremy Fisher <jeremy@query.ai>"]
 readme = "README.md"
