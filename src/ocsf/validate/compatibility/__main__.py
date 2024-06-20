@@ -186,14 +186,18 @@ def main():
 
     # Load the schemas
     try:
-        client = OcsfApiClient(cache_dir=config.get("cache", None), base_url=config.get("before_url", config.get("url", None)))
+        client = OcsfApiClient(
+            cache_dir=config.get("cache", None), base_url=config.get("before_url", config.get("url", None))
+        )
         before = get_schema(config["before"], client)
     except URLError:
         print("Unable to communicate with the OCSF server to fetch the old schema.")
         exit(1)
 
     try:
-        client = OcsfApiClient(cache_dir=config.get("cache", None), base_url=config.get("after_url", config.get("url", None)))
+        client = OcsfApiClient(
+            cache_dir=config.get("cache", None), base_url=config.get("after_url", config.get("url", None))
+        )
         after = get_schema(config["after"], client)
     except URLError:
         print("Unable to communicate with the OCSF server to fetch the new schema.")
