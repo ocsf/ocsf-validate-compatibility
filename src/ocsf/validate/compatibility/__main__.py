@@ -107,6 +107,9 @@ def main():
     parser.add_argument("--fatal", nargs="*", action="append", help="A finding to assign a fatal severity to.")
     parser.add_argument("--color", action="store_true", default=True, help="Enable colored output.")
     parser.add_argument("--no-color", dest="color", action="store_false", help="Enable colored output.")
+    parser.add_argument("--url", help="URL of the OCSF server.")
+    parser.add_argument("--before-url", help="URL of the OCSF server used to fetch the old schema.")
+    parser.add_argument("--after-url", help="URL of the OCSF server used to fetch the new schema.")
 
     args = parser.parse_args()
 
@@ -125,13 +128,26 @@ def main():
                 sevs = conf["severity"]
                 if isinstance(sevs, dict):
                     severities |= cast(dict[str, Severity], sevs)
+            if "before_url" in conf:
+                config["before_url"] = conf["before_url"]
+            if "after_url" in conf:
+                config["after_url"] = conf["after_url"]
+            if "url" in conf:
+                config["url"] = conf["url"]
 
     # Override configuration from command line arguments
     if args.before:
         config["before"] = args.before
+    if args.before_url:
+        config["before_url"] = args.before_url
 
     if args.after:
         config["after"] = args.after
+    if args.after_url:
+        config["after_url"] = args.after_url
+
+    if args.url:
+        config["url"] = args.url
 
     if args.cache:
         config["cache"] = args.cache
@@ -169,12 +185,18 @@ def main():
         exit(1)
 
     # Load the schemas
-    client = OcsfApiClient(cache_dir=config.get("cache", None))
     try:
+        client = OcsfApiClient(cache_dir=config.get("cache", None), base_url=config.get("before_url", config.get("url", None)))
         before = get_schema(config["before"], client)
+    except URLError:
+        print("Unable to communicate with the OCSF server to fetch the old schema.")
+        exit(1)
+
+    try:
+        client = OcsfApiClient(cache_dir=config.get("cache", None), base_url=config.get("after_url", config.get("url", None)))
         after = get_schema(config["after"], client)
     except URLError:
-        print("Unable to communicate with the OCSF server")
+        print("Unable to communicate with the OCSF server to fetch the new schema.")
         exit(1)
 
     # Configure a validator and run it
